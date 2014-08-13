@@ -206,8 +206,8 @@ Vagrant.configure("2") do |config|
     config.trigger.before :destroy, :stdout => true do
       run "vagrant ssh -c 'vagrant_destroy'"
     end
-		config.trigger.after [:provision, :up, :reload], :stdout => true, :force => true do
-			run "vagrant ssh -c 'xdebug_on'"
-		end
+    config.trigger.after [:provision, :up, :reload], :stdout => true, :force => true do
+      run "vagrant ssh -c 'xdebug_on'"
+    end
   end
 end
