@@ -121,6 +121,12 @@ Vagrant.configure("2") do |config|
   # nginx as well as any pre-existing database files.
   config.vm.synced_folder "config/", "/srv/config"
 
+  # /srv/log/
+  #
+  # If a log directory exists in the same directory as your Vagrantfile, a mapped
+  # directory inside the VM will be created for some generated log files.
+  config.vm.synced_folder "log/", "/srv/log", :owner => "www-data"
+
   # /srv/www/
   #
   # If a www directory exists in the same directory as your Vagrantfile, a mapped directory
@@ -178,7 +184,7 @@ Vagrant.configure("2") do |config|
   # Always start MySQL on boot, even when not running the full provisioner
   # (run: "always" support added in 1.6.0)
   if vagrant_version >= "1.6.0"
-    config.vm.provision :shell, inline: "sudo service mysql start", run: "always"
+    config.vm.provision :shell, inline: "sudo service mysql restart", run: "always"
   end
 
   # Vagrant Triggers
