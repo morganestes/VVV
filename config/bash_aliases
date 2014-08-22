@@ -5,3 +5,7 @@
 # provisioning is finished. This allows for various scripts and configurations to
 # be available to us.
 #
+
+alias ..="cd ../"
+alias ...="cd ../../"
+alias ....="cd ../../../"
