@@ -12,7 +12,7 @@ Vagrant.configure("2") do |config|
 
   # Configurations from 1.0.x can be placed in Vagrant 1.1.x specs like the following.
   config.vm.provider :virtualbox do |v|
-    v.customize ["modifyvm", :id, "--memory", 1024]
+    v.customize ["modifyvm", :id, "--memory", 2048]
     v.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
     v.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
   end
@@ -68,6 +68,9 @@ Vagrant.configure("2") do |config|
 
     # Pass the final hosts array to the hostsupdate plugin so it can perform magic.
     config.hostsupdater.aliases = hosts
+    
+    # Remove VVV hosts on suspend, too
+    config.hostsupdater.remove_on_suspend = true
 
   end
 
@@ -208,6 +211,7 @@ Vagrant.configure("2") do |config|
     end
    config.trigger.after [:provision, :up, :reload], :stdout => true do
      run "vagrant ssh -c 'xdebug_on'"
+     run "vagrant ssh -c 'sudo service nginx restart'"
    end
   end
 end
