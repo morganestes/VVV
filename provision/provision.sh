@@ -188,7 +188,7 @@ if [[ $ping_result == *bytes?from* ]]; then
 	#
 	# Install or Update Composer based on current state. Updates are direct from
 	# master branch on GitHub repository.
-	if [[ -n "$(composer --version | grep -q 'Composer version')" ]]; then
+	if [[ -n "$(composer --version --no-ansi | grep 'Composer version')" ]]; then
 		echo "Updating Composer..."
 		COMPOSER_HOME=/usr/local/src/composer composer self-update
 		COMPOSER_HOME=/usr/local/src/composer composer global update
@@ -456,7 +456,7 @@ if [[ $ping_result == *bytes?from* ]]; then
 	if [[ ! -d /srv/www/wordpress-default ]]; then
 		echo "Downloading WordPress Stable, see http://wordpress.org/"
 		cd /srv/www/
-		curl -O http://wordpress.org/latest.tar.gz
+		curl -L -O https://wordpress.org/latest.tar.gz
 		tar -xvf latest.tar.gz
 		mv wordpress wordpress-default
 		rm latest.tar.gz
