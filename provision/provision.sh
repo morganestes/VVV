@@ -315,7 +315,7 @@ service nginx restart
 service memcached restart
 
 # Disable PHP Xdebug module by default
-php5enmod xdebug
+php5dismod xdebug
 service php5-fpm restart
 
 # If MySQL is installed, go through the various imports and service tasks.
