@@ -473,34 +473,20 @@ PHP
 	fi
 
 	# Test to see if an svn upgrade is needed
-	svn_test=$( svn status -u /srv/www/wordpress-develop/ 2>&1 );
-	if [[ $svn_test == *"svn upgrade"* ]]; then
-		# If the wordpress-develop svn repo needed an upgrade, they probably all need it
-		for repo in $(find /srv/www -maxdepth 5 -type d -name '.svn'); do
-			svn upgrade "${repo/%\.svn/}"
+	cd /srv/www/wordpress-develop
+	git_test=$( git status -z 2>&1 );
+	if [[ $git_test != "" ]]; then
+		# If the wordpress-develop git repo needed an upgrade, they probably all need it
+		for repo in $(find /srv/www -maxdepth 5 -type d -name '.git'); do
+			git checkout -b master
+			git fetch origin --all --recurse-submodules=on-demand --no-commit --no-ff --progress
 		done
 	fi;
 
-	# Checkout, install and configure WordPress trunk via core.svn
-	if [[ ! -d /srv/www/wordpress-trunk ]]; then
-		echo "Checking out WordPress trunk from core.svn, see http://core.svn.wordpress.org/trunk"
-		svn checkout http://core.svn.wordpress.org/trunk/ /srv/www/wordpress-trunk
-		cd /srv/www/wordpress-trunk
-		echo "Configuring WordPress trunk..."
-		wp core config --dbname=wordpress_trunk --dbuser=wp --dbpass=wp --quiet --extra-php <<PHP
-define( 'WP_DEBUG', true );
-PHP
-		wp core install --url=local.wordpress-trunk.dev --quiet --title="Local WordPress Trunk Dev" --admin_name=admin --admin_email="admin@local.dev" --admin_password="password"
-	else
-		echo "Updating WordPress trunk..."
-		cd /srv/www/wordpress-trunk
-		svn up --ignore-externals
-	fi
-
 	# Checkout, install and configure WordPress trunk via develop.svn
 	if [[ ! -d /srv/www/wordpress-develop ]]; then
-		echo "Checking out WordPress trunk from develop.svn, see http://develop.svn.wordpress.org/trunk"
-		svn checkout http://develop.svn.wordpress.org/trunk/ /srv/www/wordpress-develop
+		echo "Checking out WordPress develop from wordpress.org, see https://make.wordpress.org/core/2014/01/15/git-mirrors-for-wordpress/"
+		git clone git://develop.git.wordpress.org/ /srv/www/wordpress-develop
 		cd /srv/www/wordpress-develop/src/
 		echo "Configuring WordPress develop..."
 		wp core config --dbname=wordpress_develop --dbuser=wp --dbpass=wp --quiet --extra-php <<PHP
@@ -538,12 +524,13 @@ PHP
 	fi
 
 	# Download phpMyAdmin
+	phpma_version="4.2.11"
 	if [[ ! -d /srv/www/default/database-admin ]]; then
-		echo "Downloading phpMyAdmin 4.1.14..."
+		echo "Downloading phpMyAdmin ${phpma_version}..."
 		cd /srv/www/default
-		wget -q -O phpmyadmin.tar.gz 'http://sourceforge.net/projects/phpmyadmin/files/phpMyAdmin/4.1.14/phpMyAdmin-4.1.14-all-languages.tar.gz/download'
+		wget -q -O phpmyadmin.tar.gz 'http://sourceforge.net/projects/phpmyadmin/files/phpMyAdmin/${phpma_version}/phpMyAdmin-${phpma_version}-all-languages.tar.gz/download'
 		tar -xf phpmyadmin.tar.gz
-		mv phpMyAdmin-4.1.14-all-languages database-admin
+		mv phpMyAdmin-${phpma_version}-all-languages database-admin
 		rm phpmyadmin.tar.gz
 	else
 		echo "PHPMyAdmin already installed."
