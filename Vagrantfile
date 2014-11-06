@@ -70,7 +70,7 @@ Vagrant.configure("2") do |config|
     config.hostsupdater.aliases = hosts
 
     # Remove VVV hosts on suspend, too
-    config.hostsupdater.remove_on_suspend = false
+    config.hostsupdater.remove_on_suspend = true
 
   end
 
