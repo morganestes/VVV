@@ -68,9 +68,9 @@ Vagrant.configure("2") do |config|
 
     # Pass the final hosts array to the hostsupdate plugin so it can perform magic.
     config.hostsupdater.aliases = hosts
-    
+
     # Remove VVV hosts on suspend, too
-    config.hostsupdater.remove_on_suspend = false
+    config.hostsupdater.remove_on_suspend = true
 
   end
 
@@ -100,7 +100,7 @@ Vagrant.configure("2") do |config|
   # a mapped directory inside the VM will be created that contains these files.
   # This directory is used to maintain default database scripts as well as backed
   # up mysql dumps (SQL files) that are to be imported automatically on vagrant up
-  config.vm.synced_folder "database/", "/srv/database"
+  config.vm.synced_folder "database/", "/srv/database", type: "nfs"
 
   # If the mysql_upgrade_info file from a previous persistent database mapping is detected,
   # we'll continue to map that directory as /var/lib/mysql inside the virtual machine. Once
@@ -110,7 +110,7 @@ Vagrant.configure("2") do |config|
   # plugin is installed.
   if File.exists?(File.join(vagrant_dir,'database/data/mysql_upgrade_info')) then
     if vagrant_version >= "1.3.0"
-      config.vm.synced_folder "database/data/", "/var/lib/mysql", :mount_options => [ "dmode=777", "fmode=777" ]
+      config.vm.synced_folder "database/data/", "/var/lib/mysql", type: "nfs"
     else
       config.vm.synced_folder "database/data/", "/var/lib/mysql", :extra => 'dmode=777,fmode=777'
     end
@@ -122,13 +122,13 @@ Vagrant.configure("2") do |config|
   # a mapped directory inside the VM will be created that contains these files.
   # This directory is currently used to maintain various config files for php and
   # nginx as well as any pre-existing database files.
-  config.vm.synced_folder "config/", "/srv/config"
+  config.vm.synced_folder "config/", "/srv/config", type: "nfs"
 
   # /srv/log/
   #
   # If a log directory exists in the same directory as your Vagrantfile, a mapped
   # directory inside the VM will be created for some generated log files.
-  config.vm.synced_folder "log/", "/srv/log", :owner => "www-data"
+  config.vm.synced_folder "log/", "/srv/log", type: "nfs"
 
   # /srv/www/
   #
@@ -136,7 +136,7 @@ Vagrant.configure("2") do |config|
   # inside the VM will be created that acts as the default location for nginx sites. Put all
   # of your project files here that you want to access through the web server
   if vagrant_version >= "1.3.0"
-    config.vm.synced_folder "www/", "/srv/www/", :owner => "www-data", :mount_options => [ "dmode=775", "fmode=774" ]
+    config.vm.synced_folder "www/", "/srv/www/", type: "nfs"
   else
     config.vm.synced_folder "www/", "/srv/www/", :owner => "www-data", :extra => 'dmode=775,fmode=774'
   end

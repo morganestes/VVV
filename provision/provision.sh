@@ -64,7 +64,11 @@ apt_package_check_list=(
 	memcached
 
 	# mysql is the default database
-	mysql-server
+	# mysql-server
+
+	# trying mariadb
+	software-properties-common
+	mariadb-server
 
 	# other packages that come in handy
 	imagemagick
@@ -150,6 +154,9 @@ if [[ $ping_result == *bytes?from* ]]; then
 		# Launchpad nodejs key C7917B12
 		gpg -q --keyserver keyserver.ubuntu.com --recv-key C7917B12
 		gpg -q -a --export  C7917B12  | apt-key add -
+
+		# Digital Ocean mariadb key
+		apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xcbcb082a1bb943db
 
 		# update all of the package references before installing anything
 		echo "Running apt-get update..."
