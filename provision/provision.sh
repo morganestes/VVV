@@ -158,7 +158,7 @@ if [[ $ping_result == *bytes?from* ]]; then
 		gpg -q --keyserver keyserver.ubuntu.com --recv-key C7917B12
 		gpg -q -a --export  C7917B12  | apt-key add -
 
-		# Digital Ocean mariadb key
+		# MariaDB key
 		apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xcbcb082a1bb943db
 
 		# HHVM key
@@ -273,23 +273,6 @@ echo " * /srv/config/nginx-config/nginx.conf           -> /etc/nginx/nginx.conf"
 echo " * /srv/config/nginx-config/nginx-wp-common.conf -> /etc/nginx/nginx-wp-common.conf"
 echo " * /srv/config/nginx-config/sites/               -> /etc/nginx/custom-sites"
 
-# HHVM setup and config
-chown vagrant /etc/hhvm
-echo "Move HHVM my-php.ini"
-cp /srv/config/hhvm-config/php.ini /etc/hhvm/my-php.ini
-hhvm -m daemon -c /etc/hhvm/my-php.ini -vEval.EnableXHP=1
-update-rc.d hhvm defaults
-
-## Init script for all custom sites
-echo "Commencing Custom Sites Setup"
-echo "Copying NGINX HHVM WordPress configuration"
-
-cp /srv/hhvm-config/nginx-hhvm.conf-sample /etc/nginx/nginx-hhvm.conf
-echo " * /srv/hhvm-config/nginx-hhvm.conf-sample -> /etc/nginx/nginx-hhvm.conf"
-
-## Let the user know the good news
-echo "Custom WordPress sites will now work with HHVM"
-
 # Copy php-fpm configuration from local
 cp /srv/config/php5-fpm-config/php5-fpm.conf /etc/php5/fpm/php5-fpm.conf
 cp /srv/config/php5-fpm-config/www.conf /etc/php5/fpm/pool.d/www.conf
@@ -311,6 +294,23 @@ echo " * /srv/config/php5-fpm-config/xdebug.ini        -> /etc/php5/mods-availab
 cp /srv/config/memcached-config/memcached.conf /etc/memcached.conf
 
 echo " * /srv/config/memcached-config/memcached.conf   -> /etc/memcached.conf"
+
+# HHVM setup and config
+chown vagrant /etc/hhvm
+echo "Move HHVM my-php.ini"
+cp /srv/config/hhvm-config/php.ini /etc/hhvm/my-php.ini
+rm /etc/hhvm/server.ini
+cp /srv/config/hhvm-config/server.ini /etc/hhvm/server.ini
+hhvm -m daemon -c /etc/hhvm/my-php.ini -vEval.EnableXHP=1
+update-rc.d hhvm defaults
+
+## Init script for all custom sites
+echo "Copying NGINX HHVM WordPress configuration"
+cp /srv/config/hhvm-config/nginx-hhvm.conf-sample /etc/nginx/nginx-hhvm.conf
+echo " * /srv/config/hhvm-config/nginx-hhvm.conf-sample -> /etc/nginx/nginx-hhvm.conf"
+
+## Let the user know the good news
+echo "HHVM is now enabled on the server and can be used on a per-site basis."
 
 # Copy custom dotfiles and bin file for the vagrant user from local
 cp /srv/config/bash_profile /home/vagrant/.bash_profile
@@ -342,12 +342,13 @@ fi
 # Make sure the services we expect to be running are running.
 echo -e "\nRestart services..."
 service nginx restart
-service hhvm restart
 service memcached restart
+service php5-fpm restart
+service hhvm restart
 
 # Disable PHP Xdebug module by default
-php5dismod xdebug
-service php5-fpm restart
+# php5dismod xdebug
+# service php5-fpm restart
 
 # If MySQL is installed, go through the various imports and service tasks.
 exists_mysql="$(service mysql status)"
@@ -545,11 +546,11 @@ PHP
 
 	# Download phpMyAdmin
 	phpma_version="4.2.11"
-	if [[ ! -f /srv/www/default/database-admin/index.php ]]; then
+	if [[ ! -d /srv/www/default/database-admin ]]; then
 		echo "Downloading phpMyAdmin ${phpma_version}..."
 		cd /srv/www/default
 		wget -q -O phpmyadmin.tar.gz "http://sourceforge.net/projects/phpmyadmin/files/phpMyAdmin/${phpma_version}/phpMyAdmin-${phpma_version}-all-languages.tar.gz/download"
-		tar -xzvf phpmyadmin.tar.gz
+		tar -xf phpmyadmin.tar.gz
 		mv phpMyAdmin-${phpma_version}-all-languages database-admin
 		rm phpmyadmin.tar.gz
 	else
