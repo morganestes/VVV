@@ -60,6 +60,9 @@ apt_package_check_list=(
 	# nginx is installed as the default web server
 	nginx
 
+	# HHVM
+	hhvm
+
 	# memcached is made available for object caching
 	memcached
 
@@ -157,6 +160,9 @@ if [[ $ping_result == *bytes?from* ]]; then
 
 		# Digital Ocean mariadb key
 		apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xcbcb082a1bb943db
+
+		# HHVM key
+		wget -O - http://dl.hhvm.com/conf/hhvm.gpg.key | apt-key add -
 
 		# update all of the package references before installing anything
 		echo "Running apt-get update..."
@@ -267,6 +273,23 @@ echo " * /srv/config/nginx-config/nginx.conf           -> /etc/nginx/nginx.conf"
 echo " * /srv/config/nginx-config/nginx-wp-common.conf -> /etc/nginx/nginx-wp-common.conf"
 echo " * /srv/config/nginx-config/sites/               -> /etc/nginx/custom-sites"
 
+# HHVM setup and config
+chown vagrant /etc/hhvm
+echo "Move HHVM my-php.ini"
+cp /srv/config/hhvm-config/php.ini /etc/hhvm/my-php.ini
+hhvm -m daemon -c /etc/hhvm/my-php.ini -vEval.EnableXHP=1
+update-rc.d hhvm defaults
+
+## Init script for all custom sites
+echo "Commencing Custom Sites Setup"
+echo "Copying NGINX HHVM WordPress configuration"
+
+cp /srv/hhvm-config/nginx-hhvm.conf-sample /etc/nginx/nginx-hhvm.conf
+echo " * /srv/hhvm-config/nginx-hhvm.conf-sample -> /etc/nginx/nginx-hhvm.conf"
+
+## Let the user know the good news
+echo "Custom WordPress sites will now work with HHVM"
+
 # Copy php-fpm configuration from local
 cp /srv/config/php5-fpm-config/php5-fpm.conf /etc/php5/fpm/php5-fpm.conf
 cp /srv/config/php5-fpm-config/www.conf /etc/php5/fpm/pool.d/www.conf
@@ -319,6 +342,7 @@ fi
 # Make sure the services we expect to be running are running.
 echo -e "\nRestart services..."
 service nginx restart
+service hhvm restart
 service memcached restart
 
 # Disable PHP Xdebug module by default
@@ -479,17 +503,6 @@ PHP
 		wp core upgrade
 	fi
 
-	# Test to see if an svn upgrade is needed
-	cd /srv/www/wordpress-develop
-	git_test=$( git status -z 2>&1 );
-	if [[ $git_test != "" ]]; then
-		# If the wordpress-develop git repo needed an upgrade, they probably all need it
-		for repo in $(find /srv/www -maxdepth 5 -type d -name '.git'); do
-			git checkout -b master
-			git fetch origin --all --recurse-submodules=on-demand --no-commit --no-ff --progress
-		done
-	fi;
-
 	# Checkout, install and configure WordPress trunk via develop.svn
 	if [[ ! -d /srv/www/wordpress-develop ]]; then
 		echo "Checking out WordPress develop from wordpress.org, see https://make.wordpress.org/core/2014/01/15/git-mirrors-for-wordpress/"
@@ -532,11 +545,11 @@ PHP
 
 	# Download phpMyAdmin
 	phpma_version="4.2.11"
-	if [[ ! -d /srv/www/default/database-admin ]]; then
+	if [[ ! -f /srv/www/default/database-admin/index.php ]]; then
 		echo "Downloading phpMyAdmin ${phpma_version}..."
 		cd /srv/www/default
-		wget -q -O phpmyadmin.tar.gz 'http://sourceforge.net/projects/phpmyadmin/files/phpMyAdmin/${phpma_version}/phpMyAdmin-${phpma_version}-all-languages.tar.gz/download'
-		tar -xf phpmyadmin.tar.gz
+		wget -q -O phpmyadmin.tar.gz "http://sourceforge.net/projects/phpmyadmin/files/phpMyAdmin/${phpma_version}/phpMyAdmin-${phpma_version}-all-languages.tar.gz/download"
+		tar -xzvf phpmyadmin.tar.gz
 		mv phpMyAdmin-${phpma_version}-all-languages database-admin
 		rm phpmyadmin.tar.gz
 	else
