@@ -60,9 +60,6 @@ apt_package_check_list=(
 	# nginx is installed as the default web server
 	nginx
 
-	# HHVM
-	hhvm
-
 	# memcached is made available for object caching
 	memcached
 
@@ -160,9 +157,6 @@ if [[ $ping_result == *bytes?from* ]]; then
 
 		# MariaDB key
 		apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xcbcb082a1bb943db
-
-		# HHVM key
-		wget -O - http://dl.hhvm.com/conf/hhvm.gpg.key | apt-key add -
 
 		# update all of the package references before installing anything
 		echo "Running apt-get update..."
@@ -295,23 +289,6 @@ cp /srv/config/memcached-config/memcached.conf /etc/memcached.conf
 
 echo " * /srv/config/memcached-config/memcached.conf   -> /etc/memcached.conf"
 
-# HHVM setup and config
-chown vagrant /etc/hhvm
-echo "Move HHVM my-php.ini"
-cp /srv/config/hhvm-config/php.ini /etc/hhvm/my-php.ini
-rm /etc/hhvm/server.ini
-cp /srv/config/hhvm-config/server.ini /etc/hhvm/server.ini
-hhvm -m daemon -c /etc/hhvm/my-php.ini -vEval.EnableXHP=1
-update-rc.d hhvm defaults
-
-## Init script for all custom sites
-echo "Copying NGINX HHVM WordPress configuration"
-cp /srv/config/hhvm-config/nginx-hhvm.conf-sample /etc/nginx/nginx-hhvm.conf
-echo " * /srv/config/hhvm-config/nginx-hhvm.conf-sample -> /etc/nginx/nginx-hhvm.conf"
-
-## Let the user know the good news
-echo "HHVM is now enabled on the server and can be used on a per-site basis."
-
 # Copy custom dotfiles and bin file for the vagrant user from local
 cp /srv/config/bash_profile /home/vagrant/.bash_profile
 cp /srv/config/bash_aliases /home/vagrant/.bash_aliases
@@ -344,7 +321,6 @@ echo -e "\nRestart services..."
 service nginx restart
 service memcached restart
 service php5-fpm restart
-service hhvm restart
 
 # Disable PHP Xdebug module by default
 # php5dismod xdebug

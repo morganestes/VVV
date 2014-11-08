@@ -210,8 +210,8 @@ Vagrant.configure("2") do |config|
       run "vagrant ssh -c 'vagrant_destroy'"
     end
    config.trigger.after [:provision, :up, :reload], :stdout => true do
-     run "vagrant ssh -c 'xdebug_on'"
-     run "vagrant ssh -c 'sudo service nginx restart'"
+    run "vagrant ssh -c 'xdebug_on'"
+    run "vagrant ssh -c 'sudo service nginx restart'"
    end
   end
 end
