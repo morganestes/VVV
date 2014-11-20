@@ -12,6 +12,3 @@ deb-src http://ppa.launchpad.net/chris-lea/node.js/ubuntu trusty main
 # Provides MariaDB
 deb http://nyc2.mirrors.digitalocean.com/mariadb/repo/5.5/ubuntu trusty main
 deb-src http://nyc2.mirrors.digitalocean.com/mariadb/repo/5.5/ubuntu trusty main
-
-# Provides HHVM
-deb http://dl.hhvm.com/ubuntu trusty main
