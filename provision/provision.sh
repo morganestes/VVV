@@ -67,7 +67,11 @@ apt_package_check_list=(
 	memcached
 
 	# mysql is the default database
-	mysql-server
+	# mysql-server
+
+	# mariadb as alternative database
+	software-properties-common
+	mariadb-server
 
 	# other packages that come in handy
 	imagemagick
@@ -155,10 +159,14 @@ if [[ $ping_result == "Connected" ]]; then
 		echo "Applying Nginx signing key..."
 		wget --quiet http://nginx.org/keys/nginx_signing.key -O- | apt-key add -
 
-		# Apply the nodejs assigning key
+		# Apply the nodejs signing key
 		echo "Applying nodejs signing key..."
 		apt-key adv --quiet --keyserver hkp://keyserver.ubuntu.com:80 --recv-key C7917B12 2>&1 | grep "gpg:"
 		apt-key export C7917B12 | apt-key add -
+
+		# MariaDB key
+		echo "Applying MariaDB signing key..."
+		apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xcbcb082a1bb943db
 
 		# update all of the package references before installing anything
 		echo "Running apt-get update..."
