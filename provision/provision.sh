@@ -51,6 +51,7 @@ apt_package_check_list=(
 	php5-dev
 
 	# Extra PHP modules that we find useful
+	php5-memcached
 	php5-memcache
 	php5-imagick
 	php5-mcrypt
