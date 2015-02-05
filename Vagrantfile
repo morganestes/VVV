@@ -11,7 +11,7 @@ Vagrant.configure("2") do |config|
 
   # Configurations from 1.0.x can be placed in Vagrant 1.1.x specs like the following.
   config.vm.provider :virtualbox do |v|
-    v.customize ["modifyvm", :id, "--memory", 2048]
+    v.customize ["modifyvm", :id, "--memory", 1024]
     v.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
     v.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
   end
@@ -29,7 +29,7 @@ Vagrant.configure("2") do |config|
   # to your host computer, it is cached for future use under the specified box name.
   config.vm.box = "ubuntu/trusty64"
 
-  config.vm.hostname = "vvv"
+  config.vm.hostname = "vvv-personal"
 
   # Local Machine Hosts
   #
@@ -71,7 +71,7 @@ Vagrant.configure("2") do |config|
   # If you are already on a network using the 192.168.50.x subnet, this should be changed.
   # If you are running more than one VM through VirtualBox, different subnets should be used
   # for those as well. This includes other Vagrant boxes.
-  config.vm.network :private_network, ip: "192.168.50.4"
+  config.vm.network :private_network, ip: "192.168.55.4"
 
   # External IP Address (example)
   #
