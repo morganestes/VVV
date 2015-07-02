@@ -14,6 +14,7 @@ Vagrant.configure("2") do |config|
     v.customize ["modifyvm", :id, "--memory", 1024]
     v.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
     v.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
+    v.name = "personal"
   end
 
   # Forward Agent
@@ -28,8 +29,8 @@ Vagrant.configure("2") do |config|
   # box containing the Ubuntu 14.04 Trusty 64 bit release. Once this box is downloaded
   # to your host computer, it is cached for future use under the specified box name.
   config.vm.box = "ubuntu/trusty64"
-
   config.vm.hostname = "vvv-personal"
+  config.vm.define "vvv" do |vvv| end
 
   # Local Machine Hosts
   #
