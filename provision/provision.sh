@@ -181,8 +181,11 @@ if [[ $ping_result == "Connected" ]]; then
 		apt-get clean
 	fi
 
-	# Make sure we have the latest npm version
+	# npm
+	#
+	# Make sure we have the latest npm version and the update checker module
 	npm install -g npm
+	npm install -g npm-check-updates
 
 	# xdebug
 	#
@@ -256,7 +259,7 @@ fi
 if [[ ! -e /etc/nginx/server.key ]]; then
 	echo "Generate Nginx server private key..."
 	vvvgenrsa="$(openssl genrsa -out /etc/nginx/server.key 2048 2>&1)"
-	echo $vvvgenrsa
+	echo "$vvvgenrsa"
 fi
 if [[ ! -e /etc/nginx/server.csr ]]; then
 	echo "Generate Certificate Signing Request (CSR)..."
@@ -265,7 +268,7 @@ fi
 if [[ ! -e /etc/nginx/server.crt ]]; then
 	echo "Sign the certificate using the above private key and CSR..."
 	vvvsigncert="$(openssl x509 -req -days 365 -in /etc/nginx/server.csr -signkey /etc/nginx/server.key -out /etc/nginx/server.crt 2>&1)"
-	echo $vvvsigncert
+	echo "$vvvsigncert"
 fi
 
 echo -e "\nSetup configuration files..."
@@ -395,9 +398,11 @@ else
 	echo -e "\nMySQL is not installed. No databases imported."
 fi
 
-# Run wp-cli as vagrant user
+# Run wp-cli, tar, and npm as `vagrant` user instead of `root`
 if (( $EUID == 0 )); then
     wp() { sudo -EH -u vagrant -- wp "$@"; }
+    tar() { sudo -EH -u vagrant -- tar "$@"; }
+    npm() { sudo -EH -u vagrant -- npm "$@"; }
 fi
 
 if [[ $ping_result == "Connected" ]]; then
@@ -481,6 +486,7 @@ if [[ $ping_result == "Connected" ]]; then
 	fi
 	# Install the standards in PHPCS
 	/srv/www/phpcs/scripts/phpcs --config-set installed_paths ./CodeSniffer/Standards/WordPress/
+	/srv/www/phpcs/scripts/phpcs --config-set default_standard WordPress-Core
 	/srv/www/phpcs/scripts/phpcs -i
 
 	# Install and configure the latest stable version of WordPress
@@ -494,6 +500,12 @@ if [[ $ping_result == "Connected" ]]; then
 		cd /srv/www/wordpress-default
 		echo "Configuring WordPress Stable..."
 		wp core config --dbname=wordpress_default --dbuser=wp --dbpass=wp --quiet --extra-php <<PHP
+// Match any requests made via xip.io.
+if ( isset( \$_SERVER['HTTP_HOST'] ) && preg_match('/^(local.wordpress.)\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(.xip.io)\z/', \$_SERVER['HTTP_HOST'] ) ) {
+	define( 'WP_HOME', 'http://' . \$_SERVER['HTTP_HOST'] );
+	define( 'WP_SITEURL', 'http://' . \$_SERVER['HTTP_HOST'] );
+}
+
 define( 'WP_DEBUG', true );
 PHP
 		echo "Installing WordPress Stable..."
@@ -520,6 +532,12 @@ PHP
 		cd /srv/www/wordpress-trunk
 		echo "Configuring WordPress trunk..."
 		wp core config --dbname=wordpress_trunk --dbuser=wp --dbpass=wp --quiet --extra-php <<PHP
+// Match any requests made via xip.io.
+if ( isset( \$_SERVER['HTTP_HOST'] ) && preg_match('/^(local.wordpress-trunk.)\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(.xip.io)\z/', \$_SERVER['HTTP_HOST'] ) ) {
+	define( 'WP_HOME', 'http://' . \$_SERVER['HTTP_HOST'] );
+	define( 'WP_SITEURL', 'http://' . \$_SERVER['HTTP_HOST'] );
+}
+
 define( 'WP_DEBUG', true );
 PHP
 		echo "Installing WordPress trunk..."
@@ -527,7 +545,7 @@ PHP
 	else
 		echo "Updating WordPress trunk..."
 		cd /srv/www/wordpress-trunk
-		svn up --ignore-externals
+		svn up
 	fi
 
 	# Checkout, install and configure WordPress trunk via develop.svn
@@ -537,8 +555,12 @@ PHP
 		cd /srv/www/wordpress-develop/src/
 		echo "Configuring WordPress develop..."
 		wp core config --dbname=wordpress_develop --dbuser=wp --dbpass=wp --quiet --extra-php <<PHP
-// Allow (src|build).wordpress-develop.dev to share the same database
-if ( 'build' == basename( dirname( __FILE__) ) ) {
+// Match any requests made via xip.io.
+if ( isset( \$_SERVER['HTTP_HOST'] ) && preg_match('/^(src|build)(.wordpress-develop.)\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(.xip.io)\z/', \$_SERVER['HTTP_HOST'] ) ) {
+	define( 'WP_HOME', 'http://' . \$_SERVER['HTTP_HOST'] );
+	define( 'WP_SITEURL', 'http://' . \$_SERVER['HTTP_HOST'] );
+} else if ( 'build' === basename( dirname( __FILE__ ) ) ) {
+	// Allow (src|build).wordpress-develop.dev to share the same Database
 	define( 'WP_HOME', 'http://build.wordpress-develop.dev' );
 	define( 'WP_SITEURL', 'http://build.wordpress-develop.dev' );
 }
@@ -599,7 +621,7 @@ find /etc/nginx/custom-sites -name 'vvv-auto-*.conf' -exec rm {} \;
 for SITE_CONFIG_FILE in $(find /srv/www -maxdepth 5 -name 'vvv-init.sh'); do
 	DIR="$(dirname $SITE_CONFIG_FILE)"
 	(
-		cd $DIR
+		cd "$DIR"
 		source vvv-init.sh
 	)
 done
@@ -609,12 +631,12 @@ for SITE_CONFIG_FILE in $(find /srv/www -maxdepth 5 -name 'vvv-nginx.conf'); do
 	DEST_CONFIG_FILE=${SITE_CONFIG_FILE//\/srv\/www\//}
 	DEST_CONFIG_FILE=${DEST_CONFIG_FILE//\//\-}
 	DEST_CONFIG_FILE=${DEST_CONFIG_FILE/%-vvv-nginx.conf/}
-	DEST_CONFIG_FILE="vvv-auto-$DEST_CONFIG_FILE-$(md5sum <<< $SITE_CONFIG_FILE | cut -c1-32).conf"
+	DEST_CONFIG_FILE="vvv-auto-$DEST_CONFIG_FILE-$(md5sum <<< "$SITE_CONFIG_FILE" | cut -c1-32).conf"
 	# We allow the replacement of the {vvv_path_to_folder} token with
 	# whatever you want, allowing flexible placement of the site folder
 	# while still having an Nginx config which works.
 	DIR="$(dirname $SITE_CONFIG_FILE)"
-	sed "s#{vvv_path_to_folder}#$DIR#" $SITE_CONFIG_FILE > /etc/nginx/custom-sites/$DEST_CONFIG_FILE
+	sed "s#{vvv_path_to_folder}#$DIR#" "$SITE_CONFIG_FILE" > /etc/nginx/custom-sites/"$DEST_CONFIG_FILE"
 done
 
 # Parse any vvv-hosts file located in www/ or subdirectories of www/
@@ -635,7 +657,7 @@ while read hostfile; do
 				echo " * Added $line from $hostfile"
 			fi
 		fi
-	done < $hostfile
+	done < "$hostfile"
 done
 
 end_seconds="$(date +%s)"
