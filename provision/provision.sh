@@ -210,9 +210,10 @@ package_install() {
     echo "Applying Nginx signing key..."
     wget --quiet "http://nginx.org/keys/nginx_signing.key" -O- | apt-key add -
 
-    # Apply the nodejs assigning key
-    apt-key adv --quiet --keyserver "hkp://keyserver.ubuntu.com:80" --recv-key C7917B12 2>&1 | grep "gpg:"
-    apt-key export C7917B12 | apt-key add -
+    # Retrieve the nodejs assigning key from NodeSource
+    echo "Adding the NodeSource signing key to your keyring..."
+    wget -qO- https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add -
+    #wget -qO- "https://deb.nodesource.com/setup_4.x" | bash -
 
     # Update all of the package references before installing anything
     echo "Running apt-get update..."
@@ -231,8 +232,10 @@ tools_install() {
   # npm
   #
   # Make sure we have the latest npm version and the update checker module
+  printf "Using npm version %s\r\n" $(npm --version)
   npm install -g npm
   npm install -g npm-check-updates
+  npm update -g
 
   # xdebug
   #
@@ -301,7 +304,7 @@ tools_install() {
 
   # Graphviz
   #
-  # Set up a symlink between the Graphviz path defined in the default Webgrind
+  # Set up a between the Graphviz path defined in the default Webgrind
   # config and actual path.
   echo "Adding graphviz symlink for Webgrind..."
   ln -sf "/usr/bin/dot" "/usr/local/bin/dot"
