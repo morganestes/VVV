@@ -1,0 +1,10 @@
+#!/bin/sh
+cd ~/vvv/www/"$2" || exit
+
+vagrant up
+
+vagrant ssh -c 'cd /srv/www/"$2" && \
+wp search-replace wordpress.clevelandclinic.10uplabs.com wordpress.clevelandclinic.org --network --url=wordpress.clevelandclinic.10uplabs.com'
+
+vagrant ssh && -c 'cd /srv/www/"$2" && \
+wp search-replace wordpress.clevelandclinic.org clevelandclinic.dev --network --url=wordpress.clevelandclinic.org'
